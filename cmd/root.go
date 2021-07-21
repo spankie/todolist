@@ -16,7 +16,7 @@ type Task struct {
 }
 
 // Tasks represents a list of tasks
-type Tasks map[int]*Task
+type Tasks []*Task
 
 const (
 	DataFilename = "database.csv"
@@ -47,17 +47,17 @@ func readAllTasksFromFile(file io.Reader) {
 	}
 
 	// initialize the in memory store of tasks
-	TaskStore = make(Tasks)
-	for i, line := range csvLines {
+	TaskStore = Tasks{}
+	for _, line := range csvLines {
 		done, err := strconv.ParseBool(line[1])
 		if err != nil {
 			fmt.Printf("something went wrong parsing done value: %v\n", err)
 			continue
 		}
-		TaskStore[i+1] = &Task{
+		TaskStore = append(TaskStore, &Task{
 			Name: line[0],
 			Done: done,
-		}
+		})
 	}
 }
 
@@ -71,8 +71,8 @@ func readAllTasksFromFileByDone(file io.Reader, isdone bool) {
 	}
 
 	// initialize the in memory store of tasks
-	TaskStore = make(Tasks)
-	for i, line := range csvLines {
+	TaskStore = Tasks{}
+	for _, line := range csvLines {
 		done, err := strconv.ParseBool(line[1])
 		if err != nil {
 			fmt.Printf("something went wrong parsing done value: %v\n", err)
@@ -81,10 +81,10 @@ func readAllTasksFromFileByDone(file io.Reader, isdone bool) {
 		if done != isdone {
 			continue
 		}
-		TaskStore[i+1] = &Task{
+		TaskStore = append(TaskStore, &Task{
 			Name: line[0],
 			Done: done,
-		}
+		})
 	}
 }
 
@@ -123,12 +123,19 @@ func persistTaskStore() {
 func changeTaskDone(done bool, ID int) {
 	// read all the data so the one we are looking for can be located and updated
 	readAllTasksFromFile(DataFile)
-	if task, ok := TaskStore[ID]; ok {
-		task.Done = done
-		TaskStore[ID] = task
-		persistTaskStore()
-	} else {
-		log.Printf("error: invalid id specified [%d]", ID)
+	// if task, ok := TaskStore[ID]; ok {
+	// 	task.Done = done
+	// 	TaskStore[ID] = task
+	// 	persistTaskStore()
+	// } else {
+	// 	log.Printf("error: invalid id specified [%d]", ID)
+	// }
+	for i, task := range TaskStore {
+		if i+1 == ID {
+			task.Done = done
+			TaskStore[i] = task
+			persistTaskStore()
+		}
 	}
 }
 
@@ -137,7 +144,7 @@ func listTasksByDone(isDone bool) {
 	readAllTasksFromFile(DataFile)
 	for i, task := range TaskStore {
 		if task.Done == isDone {
-			fmt.Printf("%d: %s\n", i, task.Name)
+			fmt.Printf("%d: %s\n", i+1, task.Name)
 		}
 	}
 }
