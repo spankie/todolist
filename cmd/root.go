@@ -11,7 +11,6 @@ import (
 
 // Task represent a task
 type Task struct {
-	ID   int64
 	Name string
 	Done bool
 }
@@ -49,20 +48,14 @@ func readAllTasksFromFile(file io.Reader) {
 
 	// initialize the in memory store of tasks
 	TaskStore = make(Tasks)
-	for _, line := range csvLines {
-		done, err := strconv.ParseBool(line[2])
+	for i, line := range csvLines {
+		done, err := strconv.ParseBool(line[1])
 		if err != nil {
 			fmt.Printf("something went wrong parsing done value: %v\n", err)
 			continue
 		}
-		ID, err := strconv.Atoi(line[0])
-		if err != nil {
-			fmt.Printf("something went wrong parsing ID value: %v\n", err)
-			continue
-		}
-		TaskStore[ID] = &Task{
-			ID:   int64(ID),
-			Name: line[1],
+		TaskStore[i+1] = &Task{
+			Name: line[0],
 			Done: done,
 		}
 	}
@@ -79,23 +72,18 @@ func readAllTasksFromFileByDone(file io.Reader, isdone bool) {
 
 	// initialize the in memory store of tasks
 	TaskStore = make(Tasks)
-	for _, line := range csvLines {
-		done, err := strconv.ParseBool(line[2])
+	for i, line := range csvLines {
+		done, err := strconv.ParseBool(line[1])
 		if err != nil {
 			fmt.Printf("something went wrong parsing done value: %v\n", err)
 			continue
 		}
-		ID, err := strconv.Atoi(line[0])
-		if err != nil {
-			fmt.Printf("something went wrong parsing ID value: %v\n", err)
+		if done != isdone {
 			continue
 		}
-		if done == isdone {
-			TaskStore[ID] = &Task{
-				ID:   int64(ID),
-				Name: line[1],
-				Done: done,
-			}
+		TaskStore[i+1] = &Task{
+			Name: line[0],
+			Done: done,
 		}
 	}
 }
@@ -103,7 +91,7 @@ func readAllTasksFromFileByDone(file io.Reader, isdone bool) {
 // append a task to the tasks data file in the filesystem
 func persistTaskToTaskStore(task Task) {
 	csvwriter := csv.NewWriter(DataFile)
-	t := []string{strconv.FormatInt(task.ID, 10), task.Name, strconv.FormatBool(task.Done)}
+	t := []string{task.Name, strconv.FormatBool(task.Done)}
 	err := csvwriter.Write(t)
 	if err != nil {
 		log.Fatal(err)
@@ -121,7 +109,7 @@ func persistTaskStore() {
 	csvwriter := csv.NewWriter(DataFile)
 
 	for _, task := range TaskStore {
-		t := []string{strconv.FormatInt(task.ID, 10), task.Name, strconv.FormatBool(task.Done)}
+		t := []string{task.Name, strconv.FormatBool(task.Done)}
 		err := csvwriter.Write(t)
 		if err != nil {
 			log.Fatal(err)
@@ -147,9 +135,9 @@ func changeTaskDone(done bool, ID int) {
 // print out all tasks based on isDone argument passed to it
 func listTasksByDone(isDone bool) {
 	readAllTasksFromFile(DataFile)
-	for _, task := range TaskStore {
+	for i, task := range TaskStore {
 		if task.Done == isDone {
-			fmt.Printf("%d: %s\n", task.ID, task.Name)
+			fmt.Printf("%d: %s\n", i, task.Name)
 		}
 	}
 }

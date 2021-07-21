@@ -10,10 +10,8 @@ var Add = &cobra.Command{
 	Example: `todolist add "take zalando test"`,
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		readAllTasksFromFile(DataFile)
 		// save the task to the list
 		task := Task{
-			ID:   TaskStore[len(TaskStore)-1].ID + 1,
 			Name: args[0],
 			Done: false,
 		}
